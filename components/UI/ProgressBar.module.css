@@ -1,0 +1,84 @@
+/* ProgressBar.module.css */
+:root { /* Убедитесь, что эти переменные доступны или определите их здесь */
+  --gd-green: #55dd00;
+  --gd-light-green: #88ff44;
+  --gd-dark-green-shadow: #33aa00;
+  --gd-text-light: #ffffff;
+  --gd-border-color: #4a4a4a;
+  --bg-progress-bar: #333333; /* Темный фон для самой полосы */
+}
+
+.progressBarContainer {
+  width: 60%; /* Ширина относительно родителя */
+  max-width: 350px; /* Максимальная ширина */
+  height: 22px; /* Немного выше */
+  background-color: var(--bg-progress-bar);
+  border-radius: 11px; /* Для скругления */
+  margin: 10px auto 15px auto; /* Отступы */
+  border: 2px solid var(--gd-border-color);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.1);
+  position: relative; /* Для позиционирования текста */
+  overflow: hidden; /* Чтобы fill не вылезал за скругления */
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(to bottom, var(--gd-light-green), var(--gd-green));
+  border-radius: 9px; /* Чуть меньше, чем у контейнера, для эффекта вложенности */
+  transition: width 0.2s ease-out; /* Плавное изменение ширины */
+  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.2), 0 1px 1px rgba(255,255,255,0.2);
+  position: relative; /* Для анимации блеска */
+}
+
+/* Анимация "блеска" для заполненной части (необязательно) */
+.progressBarFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-image: linear-gradient(
+    -45deg, 
+    rgba(255, 255, 255, .2) 25%, 
+    transparent 25%, 
+    transparent 50%, 
+    rgba(255, 255, 255, .2) 50%, 
+    rgba(255, 255, 255, .2) 75%, 
+    transparent 75%, 
+    transparent
+  );
+  z-index: 1;
+  background-size: 30px 30px; /* Размер паттерна блеска */
+  animation: progressShine 2s linear infinite;
+  border-radius: 9px;
+  opacity: 0.7;
+}
+
+@keyframes progressShine {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 60px 0; /* Двойной размер background-size для полного цикла */
+  }
+}
+
+
+.progressText {
+  position: absolute;
+  width: 100%; /* Занимает всю ширину progressBarFill */
+  text-align: center;
+  line-height: 22px; /* Соответствует высоте контейнера */
+  color: var(--gd-text-light);
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
+  z-index: 2; /* Поверх блеска */
+  /* Чтобы текст был виден, даже если fill очень узкий: */
+  left: 50%;
+  transform: translateX(-50%);
+  /* Важно: если fill узкий, текст будет по центру контейнера, а не fill.
+     Если нужно, чтобы текст был всегда внутри fill, это сложнее и может потребовать JS
+     или более хитрых CSS-трюков. Для простоты оставляем так. */
+}
