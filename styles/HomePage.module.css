@@ -1,0 +1,193 @@
+/* Используйте переменные для цветов, чтобы легко их менять */
+:root {
+  --gd-blue: #3e87ff;
+  --gd-green: #55dd00;
+  --gd-yellow: #ffff00;
+  --gd-pink: #ff00ff;
+  --gd-orange: #ff8000;
+  --gd-text-light: #ffffff;
+  --gd-text-dark: #000000;
+  --bg-dark: #2c3044; /* Темный фон как в GD */
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg-dark); /* Темный фон */
+  color: var(--gd-text-light);
+  text-align: center;
+  overflow: hidden; /* Важно для фоновых элементов */
+  position: relative; /* Для позиционирования фоновых квадратов */
+  font-family: 'Arial', sans-serif; /* Базовый шрифт */
+}
+
+.titleContainer {
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  font-family: 'Pusher', 'Arial Black', sans-serif; /* Подключенный шрифт или fallback */
+  font-size: 5rem; /* Увеличим размер */
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: -2px;
+  display: inline-block; /* Для анимации букв */
+  color: var(--gd-text-light); /* Базовый цвет текста */
+  text-shadow: 
+    -2px -2px 0 var(--gd-blue),  
+     2px -2px 0 var(--gd-blue),
+    -2px  2px 0 var(--gd-blue),
+     2px  2px 0 var(--gd-blue),
+     4px 4px 0px rgba(0,0,0,0.2); /* Простая 3D-тень */
+}
+
+/* Анимация для букв заголовка (пример) */
+.title span {
+  display: inline-block;
+  animation: bounceIn 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.title span:nth-child(1) { animation-delay: 0.1s; color: var(--gd-green); }
+.title span:nth-child(2) { animation-delay: 0.15s; }
+.title span:nth-child(3) { animation-delay: 0.2s; color: var(--gd-yellow); }
+.title span:nth-child(4) { animation-delay: 0.25s; }
+.title span:nth-child(5) { animation-delay: 0.3s; color: var(--gd-pink); }
+.title span:nth-child(6) { animation-delay: 0.35s; }
+.title span:nth-child(7) { animation-delay: 0.4s; color: var(--gd-orange); }
+.title span:nth-child(8) { animation-delay: 0.45s; }
+.title span.dashText {
+    color: var(--gd-blue); /* Цвет для слова Dash */
+}
+.title span:nth-child(9) { animation-delay: 0.55s; } /* D */
+.title span:nth-child(10) { animation-delay: 0.6s; } /* a */
+.title span:nth-child(11) { animation-delay: 0.65s; } /* s */
+.title span:nth-child(12) { animation-delay: 0.7s; } /* h */
+
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.5) translateY(-50px);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.1) translateY(10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+
+.subtitle {
+  font-size: 1.5rem;
+  color: var(--gd-text-light);
+  opacity: 0.8;
+  margin-top: -10px;
+}
+
+.startButton {
+  padding: 20px 40px; /* Увеличим кнопку */
+  font-size: 1.8rem; /* Увеличим текст кнопки */
+  font-weight: bold;
+  color: var(--gd-text-light);
+  background: linear-gradient(145deg, var(--gd-green), #4CAF50); /* Градиент */
+  border: none;
+  border-radius: 15px; /* Скругление */
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+.startButton:hover {
+  transform: translateY(-5px) scale(1.05); /* Эффект при наведении */
+  box-shadow: 0 10px 20px rgba(85, 221, 0, 0.4);
+}
+
+.startButton:active {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 5px 10px rgba(85, 221, 0, 0.3);
+}
+
+/* Пульсирующая анимация для кнопки (необязательно) */
+.animatedButton {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.footerText {
+  margin-top: 50px;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  position: relative;
+  z-index: 1;
+}
+
+/* Фоновые анимированные квадраты */
+.bgSquares {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.square {
+  position: absolute;
+  bottom: -150px; /* Начинают снизу */
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.05); /* Полупрозрачные */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: flyUp 10s linear infinite;
+}
+
+/* Разные размеры и задержки для квадратов */
+.square:nth-child(1) { left: 10%; animation-duration: 12s; animation-delay: 0s; width: 80px; height: 80px; }
+.square:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 1s; width: 30px; height: 30px; }
+.square:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 2s; }
+.square:nth-child(4) { left: 40%; animation-duration: 18s; animation-delay: 0.5s; width: 50px; height: 50px; }
+.square:nth-child(5) { left: 50%; animation-duration: 13s; animation-delay: 3s; width: 20px; height: 20px; }
+.square:nth-child(6) { left: 60%; animation-duration: 16s; animation-delay: 1.5s; width: 100px; height: 100px; }
+.square:nth-child(7) { left: 70%; animation-duration: 11s; animation-delay: 2.5s; }
+.square:nth-child(8) { left: 80%; animation-duration: 14s; animation-delay: 0.2s; width: 60px; height: 60px; }
+.square:nth-child(9) { left: 90%; animation-duration: 17s; animation-delay: 1.8s; width: 45px; height: 45px; }
+.square:nth-child(10) { left: 5%; animation-duration: 12s; animation-delay: 2.2s; }
+
+
+@keyframes flyUp {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+    border-radius: 0%;
+  }
+  100% {
+    transform: translateY(-120vh) rotate(720deg); /* Улетают далеко вверх */
+    opacity: 0;
+    border-radius: 50%;
+  }
+}
