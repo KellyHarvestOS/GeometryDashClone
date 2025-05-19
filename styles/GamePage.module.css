@@ -1,0 +1,60 @@
+/* styles/GamePage.module.css */
+/* Предполагается, что CSS переменные определены глобально или в commonStyles в GameCanvas */
+
+/* Убедитесь, что эти стили есть в globals.css для 100% высоты */
+/*
+html, body, #__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+*/
+
+.gamePageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-dark, #1c1e26); /* Цвет фона для "letterbox" */
+  overflow: hidden;
+  position: relative;
+}
+
+.gameCanvasWrapper {
+  position: relative;
+  /* Задаем "виртуальное" разрешение игры для расчета aspect-ratio */
+  --game-native-width: 800;
+  --game-native-height: 400;
+  
+  /* Рассчитываем aspect-ratio */
+  aspect-ratio: var(--game-native-width) / var(--game-native-height);
+
+  /* Ограничиваем максимальные размеры, чтобы вписаться в экран */
+  max-width: 100vw;
+  max-height: 100vh;
+
+  /* Дополнительно, если aspect-ratio один не справляется с центрированием и размером */
+  /* Эти правила помогут контейнеру занять максимум места, сохраняя пропорции */
+  width: auto; /* Позволяет высоте определять ширину через aspect-ratio */
+  height: auto; /* Позволяет ширине определять высоту через aspect-ratio */
+
+  /* Убедимся, что он не превышает родителя */
+  /* Если родитель 100vw/100vh, то эти правила будут работать вместе с aspect-ratio */
+  /* Если viewport шире, чем aspect-ratio, то высота будет 100vh, ширина auto */
+  /* Если viewport выше, чем aspect-ratio, то ширина будет 100vw, высота auto */
+  
+  /* Простой способ заставить его быть либо 100% ширины, либо 100% высоты,
+     в зависимости от того, что "меньше" с учетом aspect-ratio.
+     Это достигается тем, что aspect-ratio будет поддерживать пропорции,
+     а max-width/max-height не дадут выйти за пределы.
+  */
+   /* Для принудительного заполнения, если aspect-ratio поддерживается хорошо: */
+    width: 100%; /* Пытаемся занять всю ширину родителя */
+    height: 100%; /* Пытаемся занять всю высоту родителя */
+    /* Браузер выберет меньшее из них, чтобы сохранить aspect-ratio,
+       при условии, что родитель имеет ограничения (max-width/max-height на viewport).
+       Или, если родитель - flex контейнер, он сам отцентрирует.
+    */
+}
