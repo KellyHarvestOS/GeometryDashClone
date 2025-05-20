@@ -8,6 +8,8 @@ import Button from './UI/Button';
 import ScoreDisplay from './UI/ScoreDisplay';
 import ProgressBar from './UI/ProgressBar';
 import { ImageManager } from '../game/ImageManager';
+import { useRouter } from 'next/router';
+import { ALL_LEVELS, unlockNextLevel } from '../game/levelData';
 
 let jumpSound: HTMLAudioElement | null = null;
 let music: HTMLAudioElement | null = null;
@@ -29,6 +31,7 @@ const commonStyles = `
     --gd-green: #55dd00;
     --gd-light-green: #88ff44;
     --gd-dark-green-shadow: #33aa00;
+    --gd-yellow: #ffff00;
     --gd-text-light: #ffffff;
     --bg-dark: #2c3044;
     --bg-dark-canvas: #000000;
@@ -37,42 +40,22 @@ const commonStyles = `
 
 const loaderStyles = `
   .loader-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
-    background-color: var(--bg-dark, #2c3044);
-    color: var(--gd-text-light, white);
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    font-family: 'Pusher', 'Arial Black', sans-serif;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    height: 100vh; width: 100vw; background-color: var(--bg-dark, #2c3044);
+    color: var(--gd-text-light, white); position: fixed; top: 0; left: 0;
+    z-index: 9999; font-family: 'Pusher', 'Arial Black', sans-serif;
   }
   .loader {
-    border: 8px solid #f3f3f3;
-    border-top: 8px solid var(--gd-blue, #3498db);
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 30px;
+    border: 8px solid #f3f3f3; border-top: 8px solid var(--gd-blue, #3498db);
+    border-radius: 50%; width: 60px; height: 60px;
+    animation: spin 1s linear infinite; margin-bottom: 30px;
   }
   .loader-text {
-    font-size: 2.2rem;
-    letter-spacing: 1px;
-    animation: subtlePulse 2s infinite ease-in-out;
-    position: relative;
-    display: inline-block;
-    padding-right: 1.5em; 
+    font-size: 2.2rem; letter-spacing: 1px; animation: subtlePulse 2s infinite ease-in-out;
+    position: relative; display: inline-block; padding-right: 1.5em; 
   }
   .loader-text::after {
-    content: ''; 
-    position: absolute;
-    right: 0;
-    bottom: 0.1em; 
+    content: ''; position: absolute; right: 0; bottom: 0.1em; 
     animation: loadingDots 1.5s infinite steps(4, end);
   }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -113,28 +96,111 @@ const overlayStyles = `
   .overlayButton:hover { transform: translateY(-3px) scale(1.03) !important; box-shadow: 0 6px 15px rgba(85, 221, 0, 0.5) !important; }
 `;
 
+const pauseMenuStyles = `
+  .pauseOverlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 1500;
+    font-family: 'Pusher', 'Arial Black', sans-serif;
+    color: var(--gd-text-light, white);
+    animation: fadeInOverlay 0.3s ease-out;
+  }
+  .pauseTitle {
+    font-size: 3.5rem;
+    color: var(--gd-yellow, yellow);
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+    margin-bottom: 30px;
+  }
+  .pauseMenuButton {
+    min-width: 220px;
+    margin-bottom: 15px !important;
+  }
+  .pauseMenuButton:last-child {
+    margin-bottom: 0 !important;
+  }
+`;
+
+const pauseButtonStyles = `
+  .ingamePauseButton {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 0 !important;
+    font-size: 1rem !important;
+    background-color: rgba(0,0,0,0.5) !important;
+    border: 2px solid rgba(255,255,255,0.4) !important;
+    color: var(--gd-text-light, white) !important;
+    z-index: 100;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s, transform 0.2s !important;
+  }
+  .ingamePauseButton:hover {
+    background-color: rgba(255,255,255,0.2) !important;
+    transform: scale(1.1) !important;
+  }
+  .ingamePauseButton svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const PauseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+  </svg>
+);
+
 const GameCanvas: React.FC = () => {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<Player | null>(null);
   const obstaclesRef = useRef<Obstacle[]>([]);
   const [localImageManager, setLocalImageManager] = useState<ImageManager | null>(null);
-  const [gameState, setGameState] = useState<'loading' | 'playing' | 'gameOver' | 'levelComplete'>('loading');
+  const [gameState, setGameState] = useState<'loading' | 'playing' | 'paused' | 'gameOver' | 'levelComplete'>('loading');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [currentLevelId, setCurrentLevelId] = useState<number | null>(null);
   const [attempts, setAttempts] = useState(1);
   const [progress, setProgress] = useState(0);
   const levelProgressRef = useRef(0);
   const animationFrameIdRef = useRef<number | undefined>(undefined);
   const bgX1Ref = useRef(0);
   const BG_SPEED = C.OBSTACLE_SPEED / 4;
+  const lastPlayingStateTimeRef = useRef(0);
 
   useEffect(() => {
+    if (router.isReady) {
+      const levelIdFromQuery = router.query.levelId;
+      if (levelIdFromQuery) {
+        const id = parseInt(levelIdFromQuery as string, 10);
+        const levelExists = ALL_LEVELS.find(l => l.id === id);
+        if (levelExists) {
+            setCurrentLevelId(id);
+        } else {
+            router.push('/levels');
+        }
+      } else {
+         router.push('/levels'); 
+      }
+    }
+  }, [router.isReady, router.query.levelId, router]);
+
+  useEffect(() => {
+    if (currentLevelId === null || isInitialized) return;
+
     const manager = new ImageManager();
     manager.initializeAndLoad()
       .then(() => {
         const initialPlayerX = 50;
         const initialPlayerY = C.CANVAS_HEIGHT - C.GROUND_HEIGHT - C.PLAYER_SIZE;
         playerRef.current = new Player(initialPlayerX, initialPlayerY, manager);
-        obstaclesRef.current = loadLevel(manager);
+        obstaclesRef.current = loadLevel(manager); // TODO: Загрузка данных уровня по currentLevelId
         obstaclesRef.current.forEach(obs => { if (obs.type === 'portal') obs.triggered = false; });
         levelProgressRef.current = 0;
         setProgress(0);
@@ -149,30 +215,35 @@ const GameCanvas: React.FC = () => {
         setIsInitialized(true);
         setGameState('gameOver');
       });
-  }, []);
+  }, [currentLevelId, isInitialized]);
 
-  const startGameMusic = () => {
+  const startGameMusic = useCallback(() => {
     if (music && music.paused) {
-      music.currentTime = 0;
+      music.currentTime = (gameState === 'paused' && lastPlayingStateTimeRef.current > 0) ? lastPlayingStateTimeRef.current : 0;
       music.play().catch(error => console.warn("Music play failed:", error));
     }
-  };
+  }, [gameState]);
 
-  const stopGameMusic = () => {
+  const stopGameMusic = useCallback((pause = false) => {
     if (music) {
+      if (pause) {
+        lastPlayingStateTimeRef.current = music.currentTime;
+      } else {
+        lastPlayingStateTimeRef.current = 0;
+        music.currentTime = 0;
+      }
       music.pause();
-      music.currentTime = 0;
     }
-  };
+  }, []);
 
   const resetGameForRetry = useCallback(() => {
-    if (!canvasRef.current || !isInitialized || !localImageManager || !playerRef.current) {
+    if (!canvasRef.current || !isInitialized || !localImageManager || !playerRef.current || currentLevelId === null) {
       return;
     }
     const initialPlayerX = 50;
     const initialPlayerY = C.CANVAS_HEIGHT - C.GROUND_HEIGHT - C.PLAYER_SIZE;
     playerRef.current.resetState(initialPlayerX, initialPlayerY, localImageManager);
-    obstaclesRef.current = loadLevel(localImageManager);
+    obstaclesRef.current = loadLevel(localImageManager); // TODO: Перезагрузка ТЕКУЩЕГО уровня
     obstaclesRef.current.forEach(obs => { if (obs.type === 'portal') obs.triggered = false; });
     levelProgressRef.current = 0;
     setProgress(0);
@@ -180,45 +251,64 @@ const GameCanvas: React.FC = () => {
     stopGameMusic();
     startGameMusic();
     bgX1Ref.current = 0;
-  }, [isInitialized, localImageManager]);
+  }, [isInitialized, localImageManager, currentLevelId, startGameMusic, stopGameMusic]);
+
+  const togglePause = useCallback(() => {
+    if (gameState === 'playing') {
+      setGameState('paused');
+      stopGameMusic(true);
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+      }
+    } else if (gameState === 'paused') {
+      setGameState('playing');
+      startGameMusic();
+    }
+  },[gameState, startGameMusic, stopGameMusic]);
 
   const handlePlayerAction = useCallback(() => {
-    if (gameState === 'playing' && playerRef.current) {
-      const player = playerRef.current;
-      if (player.isOnGround) {
-        player.jump();
-        if (jumpSound) {
-          jumpSound.currentTime = 0;
-          jumpSound.play().catch(e => console.warn("Jump sound failed", e));
-        }
+    if (gameState === 'gameOver' || gameState === 'levelComplete') {
+      if (gameState === 'gameOver') {
+        setAttempts(prev => prev + 1);
+        resetGameForRetry();
+      } else {
+        router.push('/levels');
       }
-    } else if (gameState === 'gameOver' || gameState === 'levelComplete') {
-      if (gameState === 'gameOver') setAttempts(prev => prev + 1);
-      else setAttempts(1);
-      resetGameForRetry();
     }
-  }, [gameState, resetGameForRetry]);
+  }, [gameState, resetGameForRetry, router]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === 'Space' || event.key === ' ' || event.key === 'ArrowUp' || event.key === 'w') {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && (gameState === 'playing' || gameState === 'paused')) {
         event.preventDefault();
-        handlePlayerAction();
+        togglePause();
+      }
+      if (gameState === 'playing' && (event.code === 'Space' || event.key === ' ' || event.key === 'ArrowUp' || event.key === 'w')) {
+        event.preventDefault();
+        if (playerRef.current && playerRef.current.isOnGround) {
+            playerRef.current.jump();
+            if (jumpSound) { jumpSound.currentTime = 0; jumpSound.play().catch(e => console.warn("Jump sound failed", e));}
+        }
       }
     };
-    const handleMouseDown = (event: MouseEvent) => {
-        if (event.target instanceof HTMLElement && event.target.tagName === 'CANVAS') {
-            handlePlayerAction();
+     const handleCanvasClick = (event: MouseEvent) => {
+        if (gameState === 'playing' && event.target instanceof HTMLElement && event.target.tagName === 'CANVAS') {
+            if (playerRef.current && playerRef.current.isOnGround) {
+                playerRef.current.jump();
+                if (jumpSound) { jumpSound.currentTime = 0; jumpSound.play().catch(e => console.warn("Jump sound failed", e));}
+            }
         }
     };
-    window.addEventListener('keydown', handleKeyDown);
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
     const currentCanvas = canvasRef.current;
-    currentCanvas?.addEventListener('mousedown', handleMouseDown);
+    currentCanvas?.addEventListener('mousedown', handleCanvasClick);
+
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      currentCanvas?.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      currentCanvas?.removeEventListener('mousedown', handleCanvasClick);
     };
-  }, [handlePlayerAction]);
+  }, [gameState, togglePause, handlePlayerAction]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -233,10 +323,13 @@ const GameCanvas: React.FC = () => {
         return;
       }
       levelProgressRef.current += C.OBSTACLE_SPEED;
-      const currentProgress = Math.min(100, (levelProgressRef.current / C.LEVEL_LENGTH) * 100);
+      const currentLevelData = ALL_LEVELS.find(l => l.id === currentLevelId);
+      const levelLength = currentLevelData?.sceneDataFile ? C.LEVEL_LENGTH : C.LEVEL_LENGTH; // Placeholder
+      const currentProgress = Math.min(100, (levelProgressRef.current / levelLength) * 100);
       setProgress(currentProgress);
-      if (currentProgress >= 100) {
-        setGameState('levelComplete'); stopGameMusic(); return;
+
+      if (currentProgress >= 100 && currentLevelId !== null) {
+        setGameState('levelComplete'); stopGameMusic(); unlockNextLevel(currentLevelId); return;
       }
       
       const bgImage = localImageManager.getImage('backgroundLayer1');
@@ -305,11 +398,12 @@ const GameCanvas: React.FC = () => {
         player.isOnGround = false;
       }
       player.draw(ctx);
-      if (currentObstacles.filter(o => o.x > C.CANVAS_WIDTH && (o.type === 'spike' || o.type === 'portal' || (o.type === 'block' && o.y >= C.GROUND_HEIGHT && o.y < C.CANVAS_HEIGHT - C.GROUND_HEIGHT))).length < 3 && levelProgressRef.current < C.LEVEL_LENGTH - C.CANVAS_WIDTH * 1.5) {
+      // Восстановлена полная логика фильтра для генерации препятствий
+      if (currentObstacles.filter(o => o.x > C.CANVAS_WIDTH && (o.type === 'spike' || o.type === 'portal' || (o.type === 'block' && o.y >= C.GROUND_HEIGHT && o.y < C.CANVAS_HEIGHT - C.GROUND_HEIGHT))).length < 3 && levelProgressRef.current < levelLength - C.CANVAS_WIDTH * 1.5) {
          const lastNonGroundObstacle = currentObstacles.filter(o => o.type !== 'block' || (o.y >= C.GROUND_HEIGHT && o.y < C.CANVAS_HEIGHT - C.GROUND_HEIGHT)).sort((a, b) => b.x - a.x)[0];
          const lastObstacleX = lastNonGroundObstacle ? lastNonGroundObstacle.x : C.CANVAS_WIDTH / 2;
          const nextX = Math.max(C.CANVAS_WIDTH, lastObstacleX) + 250 + Math.random() * 200;
-         if (nextX < C.LEVEL_LENGTH - C.CANVAS_WIDTH / 2 && localImageManager) {
+         if (nextX < levelLength - C.CANVAS_WIDTH / 2 && localImageManager) {
             if (Math.random() < 0.65) {
                 const yPos = player.gravityDirection === 1 ? C.CANVAS_HEIGHT - C.GROUND_HEIGHT - C.PLAYER_SIZE : C.GROUND_HEIGHT;
                 obstaclesRef.current.push(new Obstacle({type: 'spike', x: nextX, y: yPos, size: C.PLAYER_SIZE}, localImageManager));
@@ -329,7 +423,7 @@ const GameCanvas: React.FC = () => {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
-  }, [gameState, isInitialized, localImageManager]);
+  }, [gameState, isInitialized, localImageManager, currentLevelId]);
 
   if (!isInitialized || gameState === 'loading') {
     return (
@@ -338,6 +432,8 @@ const GameCanvas: React.FC = () => {
           ${commonStyles}
           ${loaderStyles}
           ${overlayStyles} 
+          ${pauseMenuStyles}
+          ${pauseButtonStyles}
         `}</style>
         <div className="loader-container">
           <div className="loader"></div>
@@ -348,7 +444,16 @@ const GameCanvas: React.FC = () => {
   }
 
   let overlayContent = null;
-  if (gameState === 'gameOver') {
+  if (gameState === 'paused') {
+    overlayContent = (
+      <div className="pauseOverlay">
+        <h2 className="pauseTitle">Paused</h2>
+        <Button onClick={togglePause} className="overlayButton pauseMenuButton">Resume</Button>
+        <Button onClick={resetGameForRetry} className="overlayButton pauseMenuButton">Restart Level</Button>
+        <Button onClick={() => router.push('/levels')} className="overlayButton pauseMenuButton">Back to Levels</Button>
+      </div>
+    );
+  } else if (gameState === 'gameOver') {
     overlayContent = (
       <div className="overlay-common gameOverOverlay">
         <div className="skullIcon" role="img" aria-label="Game Over Icon">💀</div>
@@ -365,21 +470,24 @@ const GameCanvas: React.FC = () => {
         <div className="trophyIcon" role="img" aria-label="Trophy Icon">🏆</div>
         <h2 className="overlayTitle">Level Complete!</h2>
         <p className="overlaySubtitle">Отличная работа!</p>
-        <p className="overlayText">Press Space or Click to Play Again</p>
-         <Button onClick={handlePlayerAction} className="overlayButton">Play Again</Button>
+        <p className="overlayText">Press Space or Click to Continue</p>
+         <Button onClick={handlePlayerAction} className="overlayButton">Continue</Button>
       </div>
     );
   }
 
   return (
     <>
-      <style jsx global>{`${commonStyles}${overlayStyles}.game-canvas-container-actual {width: 100%;height: 100%;position: relative;}.game-canvas-element {width: 100%;height: 100%;display: block;image-rendering: pixelated;image-rendering: crisp-edges;background-color: var(--bg-dark-canvas, #000);}.game-ui-overlay {position: absolute;top: 10px;left: 10px;right: 10px;z-index: 10;pointer-events: none;}`}</style>
+      <style jsx global>{`${commonStyles}${overlayStyles}${pauseMenuStyles}${pauseButtonStyles}.game-canvas-container-actual {width: 100%;height: 100%;position: relative;}.game-canvas-element {width: 100%;height: 100%;display: block;image-rendering: pixelated;image-rendering: crisp-edges;background-color: var(--bg-dark-canvas, #000);}.game-ui-overlay {position: absolute;top: 10px;left: 10px;right: 10px;z-index: 10;pointer-events: none;}`}</style>
       <div className="game-canvas-container-actual"> 
         {gameState === 'playing' && !overlayContent && (
-          <div className="game-ui-overlay">
-            <ScoreDisplay attempts={attempts} />
-            <ProgressBar progress={progress} />
-          </div>
+          <>
+            <Button onClick={togglePause} className="ingamePauseButton" aria-label="Pause Game"><PauseIcon /></Button>
+            <div className="game-ui-overlay">
+              <ScoreDisplay attempts={attempts} />
+              <ProgressBar progress={progress} />
+            </div>
+          </>
         )}
         <canvas ref={canvasRef} width={C.CANVAS_WIDTH} height={C.CANVAS_HEIGHT} className="game-canvas-element"/>
         {overlayContent}
