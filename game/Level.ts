@@ -25,7 +25,7 @@ const level1Data: ObstacleData[] = [
 
 
 
-export function loadLevel(manager: ImageManager): Obstacle[] {
+export function loadLevel(manager: ImageManager, currentLevelId: number): Obstacle[] {
   const dynamicObstaclesData: ObstacleData[] = JSON.parse(JSON.stringify(level1Data));
   const staticGeometryData: ObstacleData[] = [];
 

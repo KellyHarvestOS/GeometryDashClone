@@ -4,7 +4,7 @@ interface ImageSources {
   spike: string;
   portalUp: string;
   portalDown: string;
-  backgroundLayer1?: string;
+  backgroundGlobal: string;
    terrainBlock: string;
     dynamicBlock?: string;
 
@@ -21,7 +21,7 @@ export class ImageManager {
     spike: '/assets/images/spike.png',
     portalUp: '/assets/images/portal_up.png',
     portalDown: '/assets/images/portal_down.png',
-    backgroundLayer1: '/assets/images/1.jpg',
+     backgroundGlobal: '/assets/images/1.jpg',
      dynamicBlock: '/assets/images/ground_block1.png',
   };
   public TILE_SIZE = 30;
