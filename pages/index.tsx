@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
           <p className={styles.subtitle}>Clone</p>
         </div>
 
-        <Link href="/game" passHref>
+        <Link href="/levels" passHref> {/* ИЗМЕНЕНО ЗДЕСЬ */}
           <button className={`${styles.startButton} ${styles.animatedButton}`}>
             Start Game
           </button>
