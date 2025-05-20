@@ -1,0 +1,42 @@
+.scoreContainer {
+  position: absolute;
+  top: 15px; /* Немного опустим */
+  left: 15px; /* Немного правее */
+  padding: 8px 15px; /* Внутренние отступы */
+  background-color: rgba(0, 0, 0, 0.5); /* Полупрозрачный темный фон */
+  color: var(--gd-text-light, white);
+  border-radius: 8px; /* Скругленные углы */
+  font-family: 'Pusher', 'Arial Black', sans-serif; /* Используем "игровой" шрифт */
+  font-size: 1.1rem; /* Размер шрифта */
+  font-weight: bold;
+  display: flex; /* Для выравнивания иконки и текста */
+  align-items: center; /* Вертикальное выравнивание */
+  gap: 8px; /* Расстояние между элементами */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Легкая граница */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Тень для объема */
+  z-index: 20; /* Чтобы был поверх других элементов UI, но под оверлеями */
+  transition: transform 0.2s ease-out; /* Плавность для возможных эффектов */
+}
+
+/* Можно добавить эффект при наведении, если это интерактивный элемент */
+/* .scoreContainer:hover {
+  transform: scale(1.05);
+} */
+
+.scoreIcon {
+  font-size: 1.3rem; /* Размер иконки */
+  /* Можно добавить цвет или другие стили для иконки */
+  /* color: var(--gd-yellow, yellow); */
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5)); /* Легкое свечение иконки */
+}
+
+.scoreLabel {
+  opacity: 0.8; /* Чуть менее заметный текст "Попытки:" */
+}
+
+.scoreValue {
+  color: var(--gd-yellow, yellow); /* Выделяем значение попыток цветом */
+  font-size: 1.2rem; /* Чуть крупнее для значения */
+  min-width: 20px; /* Минимальная ширина, чтобы не прыгал текст при изменении числа */
+  text-align: left;
+}
